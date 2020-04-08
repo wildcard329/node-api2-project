@@ -78,7 +78,7 @@ router.put('/:id', (req, res) => {
             }).catch(err => {
                 res.status(500).json({ errorMessage: "could not read updated message" })
             })
-            res.status(200).json(hub);
+            res.status(200).json(post);
         } else {
             res.status(404).json({ message: 'Could not find message' })
         }
@@ -86,13 +86,16 @@ router.put('/:id', (req, res) => {
     .catch(error => {
         console.error(error.message);
         res.status(500).json({
-            errorMessage: 'Eorror updating the message'
+            errorMessage: 'Error updating the message'
         })
     })
 })
 
 router.get('/:id/comments', (req, res) => {
-    db.findCommentById(req.params.id).then(comments => {
+    console.log(req.params.id)
+    console.log(req)
+    db.findPostComments(req.params.id).then(comments => {
+        console.log(comments)
         res.status(200).json(comments)
     })
     .catch(err => {
@@ -101,13 +104,29 @@ router.get('/:id/comments', (req, res) => {
 })
 
 router.post('/:id/comments', (req, res) => {
-    db.insertComment(req.body)
-        .then(comment => {
-            res.status(201).json(comment)
+    console.log(req.body)
+    db.findPostComments(req.params.id)
+        .then(post => {
+            if(post) {
+                db.insertComment(req.body)
+                    .then(comment => {
+                        if(req.body.text) {
+                            res.status(201).json(comment)
+                        } else {
+                            res.status(400).json({ message: 'Please provide text for the comment' })
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err.message)
+                        res.status(500).json({ errorMessage: 'error adding comment' })
+                    })
+            } else {
+                res.status(404).json({ message: "post not found" })
+            }
         })
         .catch(err => {
-            console.error(err.message)
-            res.status(500).json({ errorMessage: 'error adding comment' })
+            console.log(err.message)
+            res.status(500).json({ errorMessage: 'error finding comment' })
         })
 })
 
